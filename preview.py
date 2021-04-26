@@ -33,6 +33,7 @@ print(cap.get(cv2.CAP_PROP_FPS))
 print(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 print(cap.get(cv2.CAP_PROP_EXPOSURE))
 print(cap.get(cv2.CAP_PROP_AUTO_EXPOSURE))
+print(cap.get(cv2.CAP_PROP_XI_SENSOR_CLOCK_FREQ_HZ))
 
 exit(0)
 
