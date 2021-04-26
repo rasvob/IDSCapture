@@ -11,12 +11,12 @@ if not cap.isOpened():
 
 ret, frame = cap.read()
 
-cap.set(cv2.CAP_PROP_FRAME_WIDTH, 800)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 300)
-# cap.set(cv2.CAP_PROP_FPS, 400)
-cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0)
-cap.set(cv2.CAP_PROP_EXPOSURE, -9)
-cap.set(cv2.CAP_PROP_XI_EXPOSURE, -9)
+# cap.set(cv2.CAP_PROP_FRAME_WIDTH, 800)
+# cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 300)
+# # cap.set(cv2.CAP_PROP_FPS, 400)
+# cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0)
+# cap.set(cv2.CAP_PROP_EXPOSURE, -9)
+# cap.set(cv2.CAP_PROP_XI_EXPOSURE, -9)
 
 
 # print('cv2.CAP_PROP_FRAME_WIDTH :', cv2.CAP_PROP_FRAME_WIDTH)   # 3
@@ -32,7 +32,6 @@ print(cap.get(cv2.CAP_PROP_FPS))
 
 print(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 print(cap.get(cv2.CAP_PROP_EXPOSURE))
-print(cap.get(cv2.CAP_PROP_XI_EXPOSURE))
 print(cap.get(cv2.CAP_PROP_AUTO_EXPOSURE))
 
 exit(0)
