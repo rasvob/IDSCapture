@@ -99,14 +99,20 @@ if nRet != ueye.IS_SUCCESS:
     print("is_InquireImageMem ERROR")
 
 frame_counter = 0
-diff_arr = np.zeros(2000)
+max_frames_cnt = 800
+diff_arr = np.zeros(max_frames_cnt)
+# frames = [None] * max_frames_cnt
 frame_delay = 2500000
-while(nRet == ueye.IS_SUCCESS and frame_counter < 2000):
+
+out = cv2.VideoWriter('..\\test_output.mp4', cv2.VideoWriter_fourcc(*'mp4v'), 400, (p_width, p_height), False)
+while(nRet == ueye.IS_SUCCESS and frame_counter < max_frames_cnt):
     # In order to display the image in an OpenCV window we need to...
     # ...extract the data of our image memory
     start_time = perf_counter_ns()
     array = ueye.get_data(pcImageMemory, width, height, nBitsPerPixel, pitch, copy=False)
     frame = np.reshape(array,(height.value, width.value, bytes_per_pixel))
+    # frames[frame_counter] = frame
+    out.write(frame[:,:,0])
     stop_time = perf_counter_ns()
     diff_us = (stop_time - start_time)/1000
     diff_ns = (stop_time - start_time)
@@ -124,7 +130,9 @@ while(nRet == ueye.IS_SUCCESS and frame_counter < 2000):
     #     break
 
 
-print(f'Avg: {np.mean(diff_arr)}, Std: {np.std(diff_arr)}')
+print(f'Avg: {np.mean(diff_arr)}, Std: {np.std(diff_arr)}, Min: {np.min(diff_arr)}, Max: {np.max(diff_arr)}')
+
+out.release()
 
 ueye.is_FreeImageMem(hCam, pcImageMemory, MemID)
 ueye.is_ExitCamera(hCam)
