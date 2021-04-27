@@ -108,8 +108,9 @@ def CaptureFunction():
 
     frame_counter = 0
     max_frames_cnt = 400*60*3
-    max_frames_cnt = 400*10
+    # max_frames_cnt = 400*10
     diff_arr = np.zeros(max_frames_cnt)
+    diff_arr2 = np.zeros(max_frames_cnt)
     timestamp_arr = np.zeros(max_frames_cnt)
     # frames = [None] * max_frames_cnt
     frame_delay = 2500000
@@ -120,6 +121,10 @@ def CaptureFunction():
         # ...extract the data of our image memory
         start_time = perf_counter_ns()
         array = ueye.get_data(pcImageMemory, width, height, nBitsPerPixel, pitch, copy=True)
+        stop_time = perf_counter_ns()
+        diff_us = (stop_time - start_time)/1000
+        diff_arr2[frame_counter] = diff_us
+        print(f'Time difference: {diff_us}')
         timestamp_arr[frame_counter] = perf_counter_ns()/1000
         # frame = np.reshape(array,(height.value, width.value, bytes_per_pixel))
         q.put(array)
@@ -169,11 +174,11 @@ def EncoderFunction():
         # print('Encoder', q.qsize(), running)
         start_time = perf_counter_ns()
         array = q.get()
-        frame = np.reshape(array,(p_height, p_width, 1))
-        out.write(frame[:,:,0])
+        # frame = np.reshape(array,(p_height, p_width, 1))
+        # out.write(frame[:,:,0])
         stop_time = perf_counter_ns()
         diff_us = (stop_time - start_time)/1000
-        print(diff_us)
+        # print(diff_us)
         diff_arr.append(diff_us)
 
     out.release()
