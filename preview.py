@@ -35,8 +35,6 @@ print(cap.get(cv2.CAP_PROP_EXPOSURE))
 print(cap.get(cv2.CAP_PROP_AUTO_EXPOSURE))
 print(cap.get(cv2.CAP_PROP_XI_SENSOR_CLOCK_FREQ_HZ))
 
-exit(0)
-
 while(True):
     # Capture frame-by-frame
 
