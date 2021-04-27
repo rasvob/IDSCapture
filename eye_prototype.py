@@ -3,6 +3,12 @@ import cv2
 import numpy as np
 from time import perf_counter, perf_counter_ns
 from pyueye import ueye
+from queue import Queue
+from threading import Thread, Lock
+
+q = Queue()
+lck = Lock()
+running = True
 
 def ns_sleep(duration, get_now=perf_counter_ns):
     now = get_now()
@@ -12,127 +18,174 @@ def ns_sleep(duration, get_now=perf_counter_ns):
 
 p_width = 800
 p_height = 256
-nBitsPerPixel = ueye.INT(8)
-bytes_per_pixel = 1
-pitch = ueye.INT()
 
-rectAOI = ueye.IS_RECT()
-rectAOI.s32X = ueye.int(0)
-rectAOI.s32Y = ueye.int(0)
-rectAOI.s32Width = ueye.int(p_width)
-rectAOI.s32Height = ueye.int(p_height)
+def CaptureFunction():
+    nBitsPerPixel = ueye.INT(8)
+    bytes_per_pixel = 1
+    pitch = ueye.INT()
 
-width = rectAOI.s32Width
-height = rectAOI.s32Height
+    rectAOI = ueye.IS_RECT()
+    rectAOI.s32X = ueye.int(0)
+    rectAOI.s32Y = ueye.int(0)
+    rectAOI.s32Width = ueye.int(p_width)
+    rectAOI.s32Height = ueye.int(p_height)
 
-hCam = ueye.HIDS(0)
-ret = ueye.is_InitCamera(hCam, None)
+    width = rectAOI.s32Width
+    height = rectAOI.s32Height
 
-if ret != ueye.IS_SUCCESS:
-    print('ERR Camera access')
+    hCam = ueye.HIDS(0)
+    ret = ueye.is_InitCamera(hCam, None)
 
-nRet = ueye.is_AOI(hCam, ueye.IS_AOI_IMAGE_SET_AOI, rectAOI, ueye.sizeof(rectAOI))
+    if ret != ueye.IS_SUCCESS:
+        print('ERR Camera access')
 
-ms = ueye.DOUBLE(2.328)
-ret = ueye.is_Exposure(hCam, ueye.IS_EXPOSURE_CMD_SET_EXPOSURE, ms, ueye.sizeof(ms));
-# print('EXP:',ret, ms)
+    nRet = ueye.is_AOI(hCam, ueye.IS_AOI_IMAGE_SET_AOI, rectAOI, ueye.sizeof(rectAOI))
 
-clk_setter = ueye.c_uint(160)
-nRet = ueye.is_PixelClock(hCam, ueye.IS_PIXELCLOCK_CMD_SET, clk_setter, 4)
-if nRet != ueye.IS_SUCCESS:
-    print("is_PixelClock SET ERROR")
+    ms = ueye.DOUBLE(2.328)
+    ret = ueye.is_Exposure(hCam, ueye.IS_EXPOSURE_CMD_SET_EXPOSURE, ms, ueye.sizeof(ms));
+    # print('EXP:',ret, ms)
 
-fpsEye = ueye.c_double(400)
-fpsNewEye = ueye.c_double()
-nRet = ueye.is_SetFrameRate(hCam, fpsEye, fpsNewEye)
-if nRet != ueye.IS_SUCCESS:
-    print("is_SetFrameRate ERROR")
+    clk_setter = ueye.c_uint(160)
+    nRet = ueye.is_PixelClock(hCam, ueye.IS_PIXELCLOCK_CMD_SET, clk_setter, 4)
+    if nRet != ueye.IS_SUCCESS:
+        print("is_PixelClock SET ERROR")
 
-
-rectAOIget = ueye.IS_RECT()
-nRet = ueye.is_AOI(hCam, ueye.IS_AOI_IMAGE_GET_AOI, rectAOIget, ueye.sizeof(rectAOI))
-if nRet != ueye.IS_SUCCESS:
-    print("is_AOI ERROR")
-
-print("Maximum image width:\t", rectAOIget.s32Width)
-print("Maximum image height:\t", rectAOIget.s32Height)
+    fpsEye = ueye.c_double(400)
+    fpsNewEye = ueye.c_double()
+    nRet = ueye.is_SetFrameRate(hCam, fpsEye, fpsNewEye)
+    if nRet != ueye.IS_SUCCESS:
+        print("is_SetFrameRate ERROR")
 
 
-msG = ueye.DOUBLE(0)
-ret = ueye.is_Exposure(hCam, ueye.IS_EXPOSURE_CMD_GET_EXPOSURE, msG, ueye.sizeof(msG));
-print('EXP:',ret, msG)
+    rectAOIget = ueye.IS_RECT()
+    nRet = ueye.is_AOI(hCam, ueye.IS_AOI_IMAGE_GET_AOI, rectAOIget, ueye.sizeof(rectAOI))
+    if nRet != ueye.IS_SUCCESS:
+        print("is_AOI ERROR")
 
-PCrange = (ctypes.c_uint * 3)()
-ret = ueye.is_PixelClock(hCam, ueye.IS_PIXELCLOCK_CMD_GET_RANGE, PCrange, 3*ueye.sizeof(ueye.UINT()))
-print('PxCLK range:', ret, PCrange[0], PCrange[1], PCrange[2])
-
-clk = ueye.UINT()
-nRet = ueye.is_PixelClock(hCam, ueye.IS_PIXELCLOCK_CMD_GET, clk, ueye.sizeof(clk))
-if nRet != ueye.IS_SUCCESS:
-    print("is_PixelClock GET ERROR")
-print("PixelClock:\t", nRet, clk)
-
-print("is_SetFrameRate:\t", nRet, fpsNewEye)
-
-pcImageMemory = ueye.c_mem_p()
-MemID = ueye.int()
-
-nRet = ueye.is_AllocImageMem(hCam, width, height, nBitsPerPixel, pcImageMemory, MemID)
-if nRet != ueye.IS_SUCCESS:
-    print("is_AllocImageMem ERROR")
-
-nRet = ueye.is_SetImageMem(hCam, pcImageMemory, MemID)
-if nRet != ueye.IS_SUCCESS:
-    print("is_SetImageMem ERROR")
-
-m_nColorMode = ueye.IS_CM_MONO8
-nRet = ueye.is_SetColorMode(hCam, m_nColorMode)
-if nRet != ueye.IS_SUCCESS:
-    print("is_SetColorMode ERROR")
-
-nRet = ueye.is_CaptureVideo(hCam, ueye.IS_DONT_WAIT)
-if nRet != ueye.IS_SUCCESS:
-    print("is_CaptureVideo ERROR")
-
-nRet = ueye.is_InquireImageMem(hCam, pcImageMemory, MemID, width, height, nBitsPerPixel, pitch)
-if nRet != ueye.IS_SUCCESS:
-    print("is_InquireImageMem ERROR")
-
-frame_counter = 0
-max_frames_cnt = 800
-diff_arr = np.zeros(max_frames_cnt)
-# frames = [None] * max_frames_cnt
-frame_delay = 2500000
-
-out = cv2.VideoWriter('..\\test_output.mp4', cv2.VideoWriter_fourcc(*'mp4v'), 400, (p_width, p_height), False)
-while(nRet == ueye.IS_SUCCESS and frame_counter < max_frames_cnt):
-    # In order to display the image in an OpenCV window we need to...
-    # ...extract the data of our image memory
-    start_time = perf_counter_ns()
-    array = ueye.get_data(pcImageMemory, width, height, nBitsPerPixel, pitch, copy=False)
-    frame = np.reshape(array,(height.value, width.value, bytes_per_pixel))
-    # frames[frame_counter] = frame
-    out.write(frame[:,:,0])
-    stop_time = perf_counter_ns()
-    diff_us = (stop_time - start_time)/1000
-    diff_ns = (stop_time - start_time)
-    wait_time = frame_delay - diff_ns
-    ns_sleep(wait_time)
-    stop_time = perf_counter_ns()
-    diff_us = (stop_time - start_time)/1000
-    print(f'Time difference: {diff_us}')
-    diff_arr[frame_counter] = diff_us
-    frame_counter += 1
-    # cv2.imshow("Preview", frame)
-
-    # # Press q if you want to end the loop
-    # if cv2.waitKey(1) & 0xFF == ord('q'):
-    #     break
+    print("Maximum image width:\t", rectAOIget.s32Width)
+    print("Maximum image height:\t", rectAOIget.s32Height)
 
 
-print(f'Avg: {np.mean(diff_arr)}, Std: {np.std(diff_arr)}, Min: {np.min(diff_arr)}, Max: {np.max(diff_arr)}')
+    msG = ueye.DOUBLE(0)
+    ret = ueye.is_Exposure(hCam, ueye.IS_EXPOSURE_CMD_GET_EXPOSURE, msG, ueye.sizeof(msG));
+    print('EXP:',ret, msG)
 
-out.release()
+    PCrange = (ctypes.c_uint * 3)()
+    ret = ueye.is_PixelClock(hCam, ueye.IS_PIXELCLOCK_CMD_GET_RANGE, PCrange, 3*ueye.sizeof(ueye.UINT()))
+    print('PxCLK range:', ret, PCrange[0], PCrange[1], PCrange[2])
 
-ueye.is_FreeImageMem(hCam, pcImageMemory, MemID)
-ueye.is_ExitCamera(hCam)
+    clk = ueye.UINT()
+    nRet = ueye.is_PixelClock(hCam, ueye.IS_PIXELCLOCK_CMD_GET, clk, ueye.sizeof(clk))
+    if nRet != ueye.IS_SUCCESS:
+        print("is_PixelClock GET ERROR")
+    print("PixelClock:\t", nRet, clk)
+
+    print("is_SetFrameRate:\t", nRet, fpsNewEye)
+
+    pcImageMemory = ueye.c_mem_p()
+    MemID = ueye.int()
+
+    nRet = ueye.is_AllocImageMem(hCam, width, height, nBitsPerPixel, pcImageMemory, MemID)
+    if nRet != ueye.IS_SUCCESS:
+        print("is_AllocImageMem ERROR")
+
+    nRet = ueye.is_SetImageMem(hCam, pcImageMemory, MemID)
+    if nRet != ueye.IS_SUCCESS:
+        print("is_SetImageMem ERROR")
+
+    m_nColorMode = ueye.IS_CM_MONO8
+    nRet = ueye.is_SetColorMode(hCam, m_nColorMode)
+    if nRet != ueye.IS_SUCCESS:
+        print("is_SetColorMode ERROR")
+
+    nRet = ueye.is_CaptureVideo(hCam, ueye.IS_DONT_WAIT)
+    if nRet != ueye.IS_SUCCESS:
+        print("is_CaptureVideo ERROR")
+
+    nRet = ueye.is_InquireImageMem(hCam, pcImageMemory, MemID, width, height, nBitsPerPixel, pitch)
+    if nRet != ueye.IS_SUCCESS:
+        print("is_InquireImageMem ERROR")
+
+    frame_counter = 0
+    max_frames_cnt = 400*60*3
+    max_frames_cnt = 400*10
+    diff_arr = np.zeros(max_frames_cnt)
+    timestamp_arr = np.zeros(max_frames_cnt)
+    # frames = [None] * max_frames_cnt
+    frame_delay = 2500000
+
+    # out = cv2.VideoWriter(r'D:\\Hella\\10s.mp4', cv2.VideoWriter_fourcc(*'mp4v'), 400, (p_width, p_height), False)
+    while(nRet == ueye.IS_SUCCESS and frame_counter < max_frames_cnt):
+        # In order to display the image in an OpenCV window we need to...
+        # ...extract the data of our image memory
+        start_time = perf_counter_ns()
+        array = ueye.get_data(pcImageMemory, width, height, nBitsPerPixel, pitch, copy=True)
+        timestamp_arr[frame_counter] = perf_counter_ns()/1000
+        # frame = np.reshape(array,(height.value, width.value, bytes_per_pixel))
+        q.put(array)
+        # frames[frame_counter] = frame
+        # out.write(frame[:,:,0])
+        stop_time = perf_counter_ns()
+        diff_us = (stop_time - start_time)/1000
+        diff_ns = (stop_time - start_time)
+        wait_time = frame_delay - diff_ns
+        ns_sleep(wait_time)
+        stop_time = perf_counter_ns()
+        diff_us = (stop_time - start_time)/1000
+        # print(f'Time difference: {diff_us}')
+        diff_arr[frame_counter] = diff_us
+        frame_counter += 1
+        # cv2.imshow("Preview", frame)
+
+        # # Press q if you want to end the loop
+        # if cv2.waitKey(1) & 0xFF == ord('q'):
+        #     break
+
+
+    print(f'Avg: {np.mean(diff_arr)}, Std: {np.std(diff_arr)}, Min: {np.min(diff_arr)}, Max: {np.max(diff_arr)}')
+
+    with open(r'D:\\Hella\\10s.txt', "w") as file:
+        for x in timestamp_arr:
+            file.write(f'{x}\n')
+
+    # out.release()
+
+    ueye.is_FreeImageMem(hCam, pcImageMemory, MemID)
+    ueye.is_ExitCamera(hCam)
+    
+    with lck:
+        global running
+        running = False
+
+def EncoderFunction():
+    out = cv2.VideoWriter(r'D:\\Hella\\10s.mp4', cv2.VideoWriter_fourcc(*'mp4v'), 400, (p_width, p_height), False)
+    diff_arr = []
+    while True:
+        if q.empty():
+            with lck:
+                global running
+                if not running:
+                    break
+        # print('Encoder', q.qsize(), running)
+        start_time = perf_counter_ns()
+        array = q.get()
+        frame = np.reshape(array,(p_height, p_width, 1))
+        out.write(frame[:,:,0])
+        stop_time = perf_counter_ns()
+        diff_us = (stop_time - start_time)/1000
+        print(diff_us)
+        diff_arr.append(diff_us)
+
+    out.release()
+    print('Encoder', 'Done', np.mean(diff_arr), np.std(diff_arr))
+
+
+if __name__ == '__main__':
+    capture_thread = Thread(target=CaptureFunction)
+    encode_thread = Thread(target=EncoderFunction)
+
+    capture_thread.start()
+    encode_thread.start()
+
+    capture_thread.join()
+    encode_thread.join()
