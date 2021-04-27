@@ -1,7 +1,14 @@
-from pyueye import ueye
 import ctypes
 import cv2
 import numpy as np
+from time import perf_counter, perf_counter_ns
+from pyueye import ueye
+
+def ns_sleep(duration, get_now=perf_counter_ns):
+    now = get_now()
+    end = now + duration
+    while now < end:
+        now = get_now()
 
 p_width = 800
 p_height = 256
@@ -91,17 +98,33 @@ nRet = ueye.is_InquireImageMem(hCam, pcImageMemory, MemID, width, height, nBitsP
 if nRet != ueye.IS_SUCCESS:
     print("is_InquireImageMem ERROR")
 
-
-while(nRet == ueye.IS_SUCCESS):
+frame_counter = 0
+diff_arr = np.zeros(2000)
+frame_delay = 2500000
+while(nRet == ueye.IS_SUCCESS and frame_counter < 2000):
     # In order to display the image in an OpenCV window we need to...
     # ...extract the data of our image memory
+    start_time = perf_counter_ns()
     array = ueye.get_data(pcImageMemory, width, height, nBitsPerPixel, pitch, copy=False)
-    frame = np.reshape(array,(height.value, width.value, bytes_per_pixel))    
-    cv2.imshow("Preview", frame)
+    frame = np.reshape(array,(height.value, width.value, bytes_per_pixel))
+    stop_time = perf_counter_ns()
+    diff_us = (stop_time - start_time)/1000
+    diff_ns = (stop_time - start_time)
+    wait_time = frame_delay - diff_ns
+    ns_sleep(wait_time)
+    stop_time = perf_counter_ns()
+    diff_us = (stop_time - start_time)/1000
+    print(f'Time difference: {diff_us}')
+    diff_arr[frame_counter] = diff_us
+    frame_counter += 1
+    # cv2.imshow("Preview", frame)
 
-    # Press q if you want to end the loop
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
+    # # Press q if you want to end the loop
+    # if cv2.waitKey(1) & 0xFF == ord('q'):
+    #     break
+
+
+print(f'Avg: {np.mean(diff_arr)}, Std: {np.std(diff_arr)}')
 
 ueye.is_FreeImageMem(hCam, pcImageMemory, MemID)
 ueye.is_ExitCamera(hCam)
