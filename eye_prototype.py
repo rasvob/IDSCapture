@@ -5,7 +5,9 @@ import numpy as np
 from time import perf_counter, perf_counter_ns
 from pyueye import ueye
 from queue import Queue
-from threading import Thread, Lock
+from threading import Thread, Lock, Event
+
+from tqdm.std import tqdm
 import functions
 
 q = Queue()
@@ -21,7 +23,7 @@ def ns_sleep(duration, get_now=perf_counter_ns):
 experiment_name, root_directory, p_width, p_height, framerate, exposuretime, pixelclock, capture_lenght_minutes = functions.load_settings()
 functions.check_and_prepare_directories(experiment_name, root_directory, create_empty_folder=True)
 
-def CaptureFunction():
+def CaptureFunction(evt: Event):
     nBitsPerPixel = ueye.INT(8)
     bytes_per_pixel = 1
     pitch = ueye.INT()
@@ -123,7 +125,7 @@ def CaptureFunction():
         stop_time = perf_counter_ns()
         diff_us = (stop_time - start_time)/1000
         diff_arr2[frame_counter] = diff_us
-        print(f'Time difference: {diff_us}')
+        # print(f'Time difference: {diff_us}')
         timestamp_arr[frame_counter] = perf_counter_ns()/1000
         # frame = np.reshape(array,(height.value, width.value, bytes_per_pixel))
         q.put(array)
@@ -157,12 +159,14 @@ def CaptureFunction():
     ueye.is_FreeImageMem(hCam, pcImageMemory, MemID)
     ueye.is_ExitCamera(hCam)
     
-    with lck:
-        global running
-        running = False
+    evt.set()
+
+    # with lck:
+    #     global running
+    #     running = False
 
 def EncoderFunction():
-    out = cv2.VideoWriter(os.path.join(root_directory, experiment_name, f'{experiment_name}.mp4'), cv2.VideoWriter_fourcc(*'mp4v'), 400, (p_width, p_height), False)
+    out = cv2.VideoWriter(os.path.join(root_directory, experiment_name, f'{experiment_name}.mp4'), cv2.VideoWriter_fourcc(*'mp4v'), framerate, (p_width, p_height), False)
     diff_arr = []
     while True:
         if q.empty():
@@ -183,35 +187,57 @@ def EncoderFunction():
     out.release()
     print('Encoder', 'Done', np.mean(diff_arr), np.std(diff_arr))
 
-def RawEncoderFunction():
+def RawEncoderFunction(callback, evt:Event):
     out = open(os.path.join(root_directory, experiment_name, f'{experiment_name}.mono'), 'wb')
     diff_arr = []
-    while True:
-        if q.empty():
-            with lck:
-                global running
-                if not running:
-                    break
+    max_frames_cnt = framerate*60*capture_lenght_minutes
+    frame_count = 0
+    print('Encoder', 'Start')
+    while frame_count < max_frames_cnt:
+        # if q.empty():
+        #     with lck:
+        #         global running
+        #         if not running:
+        #             break
         # print('Encoder', q.qsize(), running)
+
+        if q.empty():
+            if evt.is_set():
+                break
+            continue
+        
         start_time = perf_counter_ns()
         array = q.get()
         ret = out.write(array)
         stop_time = perf_counter_ns()
         diff_us = (stop_time - start_time)/1000
-        print(diff_us, ret)
+        # print(diff_us, ret)
         diff_arr.append(diff_us)
+        if callback:
+            callback()
+        q.task_done()
 
+    print('Encoder', 'After While')
     out.flush()
+    print('Encoder', 'Flush')
     out.close()
+    print('Encoder', 'Close')
     print('Encoder', 'Done', np.mean(diff_arr), np.std(diff_arr))
 
 if __name__ == '__main__':
-    capture_thread = Thread(target=CaptureFunction)
+    stop_event = Event()
+    enc_pbar = tqdm(total=framerate*60*capture_lenght_minutes, unit='ticks')
+    capture_thread = Thread(target=CaptureFunction, args=(stop_event, ))
     # encode_thread = Thread(target=EncoderFunction)
-    encode_thread = Thread(target=RawEncoderFunction)
+    
+    encode_thread = Thread(target=RawEncoderFunction, args=(lambda: enc_pbar.update(1), stop_event))
 
+    capture_thread.daemon = True
+    encode_thread.daemon = True
     capture_thread.start()
     encode_thread.start()
 
     capture_thread.join()
     encode_thread.join()
+
+    enc_pbar.close()

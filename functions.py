@@ -22,15 +22,15 @@ def load_settings(confing_filename = 'config.yaml'):
 
 def check_and_prepare_directories(experiment_name, root_directory, create_empty_folder=False):
     experiment_directory = os.path.join(root_directory, experiment_name)
-    if not os.path.isfile(root_directory):
+    if not os.path.isdir(root_directory):
         raise Exception(f'Wrong root directory path {root_directory}.')
     
     if create_empty_folder:
-        if os.path.isfile(experiment_directory):
+        if os.path.isdir(experiment_directory):
             raise Exception(f'Experiment {experiment_name} already exists.')    
         else:
             os.mkdir(experiment_directory)
             print(f'Created new directory {experiment_directory} for experiment {experiment_name}.')
     else:
-        if not os.path.isfile(experiment_directory):
+        if not os.path.isdir(experiment_directory):
             raise Exception(f'Wrong experiment directory path {experiment_directory}.')

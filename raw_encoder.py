@@ -6,9 +6,8 @@ from tqdm import tqdm
 import functions
 
 experiment_name, root_directory, p_width, p_height, fps, exposuretime, pixelclock, capture_lenght_minutes = functions.load_settings()
-functions.check_and_prepare_directories(experiment_name, root_directory, create_empty_folder=True)
+functions.check_and_prepare_directories(experiment_name, root_directory, create_empty_folder=False)
 play = False
-
 
 if __name__ == "__main__":
     cap = None
@@ -18,7 +17,7 @@ if __name__ == "__main__":
         print('Error opening video stream or file')
         exit(1)
 
-    frame_count = os.stat(r'D:\\Hella\\10s.mono').st_size / (p_width*p_height)
+    frame_count = os.stat(os.path.join(root_directory, experiment_name, f'{experiment_name}.mono')).st_size / (p_width*p_height)
     pbar = tqdm(total=frame_count, unit='ticks')
 
     if play:
@@ -40,7 +39,7 @@ if __name__ == "__main__":
 
     else:
         i = 0
-        out = cv2.VideoWriter(os.path.join(root_directory, experiment_name, f'{experiment_name}_enc.mono'), cv2.VideoWriter_fourcc(*'mp4v'), 400, (p_width, p_height), False)
+        out = cv2.VideoWriter(os.path.join(root_directory, experiment_name, f'{experiment_name}.mp4'), cv2.VideoWriter_fourcc(*'mp4v'), fps, (p_width, p_height), False)
         while(True):
             array = cap.read(p_width*p_height)
 
