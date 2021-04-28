@@ -1,10 +1,12 @@
 import ctypes
+import os
 import cv2
 import numpy as np
 from time import perf_counter, perf_counter_ns
 from pyueye import ueye
 from queue import Queue
 from threading import Thread, Lock
+import functions
 
 q = Queue()
 lck = Lock()
@@ -16,8 +18,8 @@ def ns_sleep(duration, get_now=perf_counter_ns):
     while now < end:
         now = get_now()
 
-p_width = 800
-p_height = 256
+experiment_name, root_directory, p_width, p_height, framerate, exposuretime, pixelclock, capture_lenght_minutes = functions.load_settings()
+functions.check_and_prepare_directories(experiment_name, root_directory, create_empty_folder=True)
 
 def CaptureFunction():
     nBitsPerPixel = ueye.INT(8)
@@ -41,16 +43,16 @@ def CaptureFunction():
 
     nRet = ueye.is_AOI(hCam, ueye.IS_AOI_IMAGE_SET_AOI, rectAOI, ueye.sizeof(rectAOI))
 
-    ms = ueye.DOUBLE(2.328)
+    ms = ueye.DOUBLE(exposuretime)
     ret = ueye.is_Exposure(hCam, ueye.IS_EXPOSURE_CMD_SET_EXPOSURE, ms, ueye.sizeof(ms));
     # print('EXP:',ret, ms)
 
-    clk_setter = ueye.c_uint(160)
+    clk_setter = ueye.c_uint(pixelclock)
     nRet = ueye.is_PixelClock(hCam, ueye.IS_PIXELCLOCK_CMD_SET, clk_setter, 4)
     if nRet != ueye.IS_SUCCESS:
         print("is_PixelClock SET ERROR")
 
-    fpsEye = ueye.c_double(400)
+    fpsEye = ueye.c_double(framerate)
     fpsNewEye = ueye.c_double()
     nRet = ueye.is_SetFrameRate(hCam, fpsEye, fpsNewEye)
     if nRet != ueye.IS_SUCCESS:
@@ -107,15 +109,12 @@ def CaptureFunction():
         print("is_InquireImageMem ERROR")
 
     frame_counter = 0
-    max_frames_cnt = 400*60*1
-    # max_frames_cnt = 400*10
+    max_frames_cnt = framerate*60*capture_lenght_minutes
     diff_arr = np.zeros(max_frames_cnt)
     diff_arr2 = np.zeros(max_frames_cnt)
     timestamp_arr = np.zeros(max_frames_cnt)
-    # frames = [None] * max_frames_cnt
     frame_delay = 2500000
 
-    # out = cv2.VideoWriter(r'D:\\Hella\\10s.mp4', cv2.VideoWriter_fourcc(*'mp4v'), 400, (p_width, p_height), False)
     while(nRet == ueye.IS_SUCCESS and frame_counter < max_frames_cnt):
         # In order to display the image in an OpenCV window we need to...
         # ...extract the data of our image memory
@@ -149,7 +148,7 @@ def CaptureFunction():
 
     print(f'Avg: {np.mean(diff_arr)}, Std: {np.std(diff_arr)}, Min: {np.min(diff_arr)}, Max: {np.max(diff_arr)}')
 
-    with open(r'D:\\Hella\\10s.txt', "w") as file:
+    with open(os.path.join(root_directory, experiment_name, 'timestamps.txt'), "w") as file:
         for x in timestamp_arr:
             file.write(f'{x}\n')
 
@@ -163,7 +162,7 @@ def CaptureFunction():
         running = False
 
 def EncoderFunction():
-    out = cv2.VideoWriter(r'D:\\Hella\\10s.mp4', cv2.VideoWriter_fourcc(*'mp4v'), 400, (p_width, p_height), False)
+    out = cv2.VideoWriter(os.path.join(root_directory, experiment_name, f'{experiment_name}.mp4'), cv2.VideoWriter_fourcc(*'mp4v'), 400, (p_width, p_height), False)
     diff_arr = []
     while True:
         if q.empty():
@@ -185,7 +184,7 @@ def EncoderFunction():
     print('Encoder', 'Done', np.mean(diff_arr), np.std(diff_arr))
 
 def RawEncoderFunction():
-    out = open(r'D:\\Hella\\10s.mono', 'wb')
+    out = open(os.path.join(root_directory, experiment_name, f'{experiment_name}.mono'), 'wb')
     diff_arr = []
     while True:
         if q.empty():
