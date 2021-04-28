@@ -13,8 +13,6 @@ def load_settings(confing_filename = 'config.yaml'):
     assert height % 4 == 0
     framerate = config_yml['framerate']
     exposuretime = config_yml['exposuretime']
-    if config_yml['exposuretime'] == 0: # special case for auto setting of exposure time
-        pass # get max exposure time from C function
     pixelclock = config_yml['pixelclock']
     capture_lenght_minutes = config_yml['capture_lenght_minutes']
 
