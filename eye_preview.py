@@ -5,15 +5,15 @@ from time import perf_counter, perf_counter_ns
 from pyueye import ueye
 from queue import Queue
 from threading import Thread, Lock
+import functions
+
+experiment_name, p_width, p_height, framerate, exposuretime, pixelclock, capture_lenght_minutes = functions.load_settings()
 
 def ns_sleep(duration, get_now=perf_counter_ns):
     now = get_now()
     end = now + duration
     while now < end:
         now = get_now()
-
-p_width = 800
-p_height = 256
 
 nBitsPerPixel = ueye.INT(8)
 bytes_per_pixel = 1
@@ -36,16 +36,16 @@ if ret != ueye.IS_SUCCESS:
 
 nRet = ueye.is_AOI(hCam, ueye.IS_AOI_IMAGE_SET_AOI, rectAOI, ueye.sizeof(rectAOI))
 
-ms = ueye.DOUBLE(2.328)
+ms = ueye.DOUBLE(exposuretime)
 ret = ueye.is_Exposure(hCam, ueye.IS_EXPOSURE_CMD_SET_EXPOSURE, ms, ueye.sizeof(ms));
 # print('EXP:',ret, ms)
 
-clk_setter = ueye.c_uint(160)
+clk_setter = ueye.c_uint(pixelclock)
 nRet = ueye.is_PixelClock(hCam, ueye.IS_PIXELCLOCK_CMD_SET, clk_setter, 4)
 if nRet != ueye.IS_SUCCESS:
     print("is_PixelClock SET ERROR")
 
-fpsEye = ueye.c_double(400)
+fpsEye = ueye.c_double(framerate)
 fpsNewEye = ueye.c_double()
 nRet = ueye.is_SetFrameRate(hCam, fpsEye, fpsNewEye)
 if nRet != ueye.IS_SUCCESS:
@@ -102,11 +102,9 @@ if nRet != ueye.IS_SUCCESS:
     print("is_InquireImageMem ERROR")
 
 frame_counter = 0
-max_frames_cnt = 400*60*3
-max_frames_cnt = 400*10
+max_frames_cnt = framerate*60*capture_lenght_minutes
 diff_arr = np.zeros(max_frames_cnt)
 timestamp_arr = np.zeros(max_frames_cnt)
-# frames = [None] * max_frames_cnt
 frame_delay = 2500000
 
 # out = cv2.VideoWriter(r'D:\\Hella\\10s.mp4', cv2.VideoWriter_fourcc(*'mp4v'), 400, (p_width, p_height), False)
