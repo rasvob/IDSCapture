@@ -1,0 +1,7 @@
+experiment_name: demo
+width: 800
+height: 256
+framerate: 400
+exposuretime: 2.328
+pixelclock: 160
+capture_lenght_minutes: 1
