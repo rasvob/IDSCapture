@@ -1,4 +1,5 @@
 experiment_name: demo
+root_directory: D:\\Hella
 width: 800
 height: 256
 framerate: 400

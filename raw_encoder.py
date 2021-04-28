@@ -1,18 +1,19 @@
 import numpy as np
 from matplotlib import pyplot as plt 
 import cv2
-from tqdm import tqdm
 import os
+from tqdm import tqdm
+import functions
 
-p_width = 800
-p_height = 256
-fps = 400
+experiment_name, root_directory, p_width, p_height, fps, exposuretime, pixelclock, capture_lenght_minutes = functions.load_settings()
+functions.check_and_prepare_directories(experiment_name, root_directory, create_empty_folder=True)
 play = False
+
 
 if __name__ == "__main__":
     cap = None
     try:
-        cap = open(r'D:\\Hella\\10s.mono', 'rb')
+        cap = open(os.path.join(root_directory, experiment_name, f'{experiment_name}.mono'), 'rb')
     except IOError:
         print('Error opening video stream or file')
         exit(1)
@@ -39,7 +40,7 @@ if __name__ == "__main__":
 
     else:
         i = 0
-        out = cv2.VideoWriter(r'D:\\Hella\\10s_enc.mp4', cv2.VideoWriter_fourcc(*'mp4v'), 400, (p_width, p_height), False)
+        out = cv2.VideoWriter(os.path.join(root_directory, experiment_name, f'{experiment_name}_enc.mono'), cv2.VideoWriter_fourcc(*'mp4v'), 400, (p_width, p_height), False)
         while(True):
             array = cap.read(p_width*p_height)
 

@@ -7,13 +7,13 @@ from queue import Queue
 from threading import Thread, Lock
 import functions
 
-experiment_name, p_width, p_height, framerate, exposuretime, pixelclock, capture_lenght_minutes = functions.load_settings()
-
 def ns_sleep(duration, get_now=perf_counter_ns):
     now = get_now()
     end = now + duration
     while now < end:
         now = get_now()
+
+experiment_name, root_directory, p_width, p_height, framerate, exposuretime, pixelclock, capture_lenght_minutes = functions.load_settings()
 
 nBitsPerPixel = ueye.INT(8)
 bytes_per_pixel = 1
@@ -107,7 +107,6 @@ diff_arr = np.zeros(max_frames_cnt)
 timestamp_arr = np.zeros(max_frames_cnt)
 frame_delay = 2500000
 
-# out = cv2.VideoWriter(r'D:\\Hella\\10s.mp4', cv2.VideoWriter_fourcc(*'mp4v'), 400, (p_width, p_height), False)
 while(nRet == ueye.IS_SUCCESS and frame_counter < max_frames_cnt):
     # In order to display the image in an OpenCV window we need to...
     # ...extract the data of our image memory
