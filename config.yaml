@@ -1,8 +1,8 @@
-experiment_name: demo_event
+experiment_name: demo_event2
 root_directory: D:\Hella
 width: 800
 height: 256
 framerate: 400
 exposuretime: 2.328
 pixelclock: 160
-capture_lenght_minutes: 3
+capture_lenght_minutes: 2
