@@ -107,7 +107,7 @@ def CaptureFunction():
         print("is_InquireImageMem ERROR")
 
     frame_counter = 0
-    max_frames_cnt = 400*60*3
+    max_frames_cnt = 400*60*1
     # max_frames_cnt = 400*10
     diff_arr = np.zeros(max_frames_cnt)
     diff_arr2 = np.zeros(max_frames_cnt)
@@ -174,8 +174,8 @@ def EncoderFunction():
         # print('Encoder', q.qsize(), running)
         start_time = perf_counter_ns()
         array = q.get()
-        # frame = np.reshape(array,(p_height, p_width, 1))
-        # out.write(frame[:,:,0])
+        frame = np.reshape(array,(p_height, p_width, 1))
+        out.write(frame[:,:,0])
         stop_time = perf_counter_ns()
         diff_us = (stop_time - start_time)/1000
         # print(diff_us)
@@ -184,10 +184,32 @@ def EncoderFunction():
     out.release()
     print('Encoder', 'Done', np.mean(diff_arr), np.std(diff_arr))
 
+def RawEncoderFunction():
+    out = open(r'D:\\Hella\\10s.mono', 'wb')
+    diff_arr = []
+    while True:
+        if q.empty():
+            with lck:
+                global running
+                if not running:
+                    break
+        # print('Encoder', q.qsize(), running)
+        start_time = perf_counter_ns()
+        array = q.get()
+        ret = out.write(array)
+        stop_time = perf_counter_ns()
+        diff_us = (stop_time - start_time)/1000
+        print(diff_us, ret)
+        diff_arr.append(diff_us)
+
+    out.flush()
+    out.close()
+    print('Encoder', 'Done', np.mean(diff_arr), np.std(diff_arr))
 
 if __name__ == '__main__':
     capture_thread = Thread(target=CaptureFunction)
-    encode_thread = Thread(target=EncoderFunction)
+    # encode_thread = Thread(target=EncoderFunction)
+    encode_thread = Thread(target=RawEncoderFunction)
 
     capture_thread.start()
     encode_thread.start()
