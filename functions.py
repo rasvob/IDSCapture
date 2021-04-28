@@ -1,8 +1,8 @@
 import yaml
 import os
 
-def load_settings(confing_filename = 'config.yaml'):
-    with open(confing_filename, 'r') as file:
+def load_settings(config_filename = 'config.yaml'):
+    with open(config_filename, 'r') as file:
         config_yml = yaml.safe_load(file)
     
     experiment_name = config_yml['experiment_name']
@@ -17,6 +17,13 @@ def load_settings(confing_filename = 'config.yaml'):
     capture_lenght_minutes = config_yml['capture_lenght_minutes']
 
     return experiment_name, root_directory, width, height, framerate, exposuretime, pixelclock, capture_lenght_minutes
+
+
+def copy_config_file(config_filename = 'config.yaml'):
+    experiment_name, root_directory, width, height, framerate, exposuretime, pixelclock, capture_lenght_minutes = load_settings(config_filename)
+    dest_conf_filename = os.path.join(root_directory, experiment_name, 'backuped_config.yaml')    
+    os.system(f'copy {config_filename} {dest_conf_filename}')    
+
 
 def check_and_prepare_directories(experiment_name, root_directory, create_empty_folder=False):
     experiment_directory = os.path.join(root_directory, experiment_name)
