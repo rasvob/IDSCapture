@@ -103,7 +103,7 @@ def CaptureFunction(evt: Event):
     if nRet != ueye.IS_SUCCESS:
         print("is_SetColorMode ERROR")
 
-    nRet = ueye.is_CaptureVideo(hCam, ueye.IS_WAIT)
+    nRet = ueye.is_CaptureVideo(hCam, ueye.IS_DONT_WAIT)
     if nRet != ueye.IS_SUCCESS:
         print("is_CaptureVideo ERROR")
 
@@ -211,6 +211,7 @@ def RawEncoderFunction(callback, evt:Event):
         start_time = perf_counter_ns()
         array = q.get()
         ret = out.write(array)
+        # del array
         stop_time = perf_counter_ns()
         diff_us = (stop_time - start_time)/1000
         # print(diff_us, ret)
