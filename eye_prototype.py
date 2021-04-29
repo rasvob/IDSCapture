@@ -22,6 +22,7 @@ def ns_sleep(duration, get_now=perf_counter_ns):
 
 experiment_name, root_directory, p_width, p_height, framerate, exposuretime, pixelclock, capture_lenght_minutes = functions.load_settings()
 functions.check_and_prepare_directories(experiment_name, root_directory, create_empty_folder=True)
+functions.copy_config_file()
 
 def CaptureFunction(evt: Event):
     nBitsPerPixel = ueye.INT(8)
