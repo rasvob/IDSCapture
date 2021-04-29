@@ -102,7 +102,7 @@ def CaptureFunction(evt: Event):
     if nRet != ueye.IS_SUCCESS:
         print("is_SetColorMode ERROR")
 
-    nRet = ueye.is_CaptureVideo(hCam, ueye.IS_DONT_WAIT)
+    nRet = ueye.is_CaptureVideo(hCam, ueye.IS_WAIT)
     if nRet != ueye.IS_SUCCESS:
         print("is_CaptureVideo ERROR")
 
@@ -115,7 +115,8 @@ def CaptureFunction(evt: Event):
     diff_arr = np.zeros(max_frames_cnt)
     diff_arr2 = np.zeros(max_frames_cnt)
     timestamp_arr = np.zeros(max_frames_cnt)
-    frame_delay = 2500000
+    # frame_delay = 2500000
+    frame_delay = int((10**9/framerate))
 
     while(nRet == ueye.IS_SUCCESS and frame_counter < max_frames_cnt):
         # In order to display the image in an OpenCV window we need to...
