@@ -1,8 +1,8 @@
-experiment_name: demo_low_level2
+experiment_name: Hrabova_test_metr
 root_directory: D:\Hella
 width: 800
 height: 256
 framerate: 400
 exposuretime: 2.328
 pixelclock: 160
-capture_lenght_minutes: 2
+capture_lenght_minutes: 11
