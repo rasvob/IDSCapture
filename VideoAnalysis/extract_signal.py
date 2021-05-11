@@ -25,7 +25,6 @@ if __name__ == "__main__":
     while(cap.isOpened()):
         ret, frame = cap.read()
         key = cv2.waitKey(0)
-        key = None
         if key == ord('c') or first or free_run:
             if ret:
                 first = False
@@ -34,8 +33,23 @@ if __name__ == "__main__":
                 if i > end:
                     break
                 frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
-                ret, thresh_bin = cv2.threshold(frame, 50, 255, cv2.THRESH_BINARY)
-                cv2.imshow('Frame - bin', thresh_bin)
+                ret, thresh_bin_10 = cv2.threshold(frame, 10, 255, cv2.THRESH_BINARY)
+                ret, thresh_bin_50 = cv2.threshold(frame, 50, 255, cv2.THRESH_BINARY)
+                ret, thresh_bin_100 = cv2.threshold(frame, 100, 255, cv2.THRESH_BINARY)
+                ret, thresh_bin_115 = cv2.threshold(frame, 115, 255, cv2.THRESH_BINARY)
+                cv2.imshow('Frame - bin 10', thresh_bin_10)
+                cv2.imshow('Frame - bin 50', thresh_bin_50)
+                cv2.imshow('Frame - bin 100', thresh_bin_100)
+                cv2.imshow('Frame - bin 115', thresh_bin_115)
+                cv2.imshow('Frame - orig', frame)
+        elif key == ord('s'):
+            for x in range(0, 400):
+                ret, frame = cap.read()
+                if ret:
+                    i += 1
+                    pbar.update()
+                else:
+                    break
         elif key == ord('q'):
             break
     
