@@ -5,6 +5,10 @@ import cv2
 from tqdm import tqdm
 
 if __name__ == "__main__":
+    # input_file = r'C:\Users\svo0175\Documents\Work\Svetlomet\Hella_06_05_2021\Hrabova_test_long_spatne_svetlo\Hrabova_test_long_spatne_svetlo_cut.mp4'
+    # input_file_ts = r'C:\Users\svo0175\Documents\Work\Svetlomet\Hella_06_05_2021\Hrabova_test_long_spatne_svetlo\timestamps_cut.txt'
+    # output_file = r'C:\Users\svo0175\Documents\Work\Svetlomet\Hella_06_05_2021\Hrabova_test_long_spatne_svetlo\Hrabova_test_long_spatne_svetlo_cut_{0}.{1}'
+
     input_file = r'C:\Users\svo0175\Documents\Work\Svetlomet\Hella_06_05_2021\Hrabova_test_long_nove_svetlo\Hrabova_test_long_nove_svetlo_cut.mp4'
     input_file_ts = r'C:\Users\svo0175\Documents\Work\Svetlomet\Hella_06_05_2021\Hrabova_test_long_nove_svetlo\timestamps_cut.txt'
     output_file = r'C:\Users\svo0175\Documents\Work\Svetlomet\Hella_06_05_2021\Hrabova_test_long_nove_svetlo\Hrabova_test_long_nove_svetlo_cut_{0}.{1}'
@@ -25,7 +29,7 @@ if __name__ == "__main__":
     end = length
     first = True
     free_run = True
-    thresholds_arr = [10, 50, 100, 115]
+    thresholds_arr = [10, 30, 50, 70, 100]
     out_arrs = {}
     for t in thresholds_arr:
         out_arrs[t] = np.zeros((length, height))
@@ -45,8 +49,8 @@ if __name__ == "__main__":
                     out_arrs[x][i, :] = np.argmax(thresh_bin, axis=1)
                 
                 if not free_run:
-                    for i, frame in enumerate(thresholds_frames):
-                        cv2.imshow(f'Frame - bin {thresholds_arr[i]}', frame)
+                    for i, frame_b in enumerate(thresholds_frames):
+                        cv2.imshow(f'Frame - bin {thresholds_arr[i]}', frame_b)
                     cv2.imshow('Frame - orig', frame)
 
                 i += 1
@@ -78,6 +82,6 @@ if __name__ == "__main__":
     for k,v in out_arrs.items():
         df = pd.DataFrame(v, columns=[f'Row_{x}' for x in range(height)])
         df['FrameTimestamp_us'] = ps_ts
-        df.to_parquet(output_file.format(k, 'parquet.gzip'), compression='gzip', engine='pyarrow')
+        df.to_parquet(output_file.format(k, 'parquet.gzip'), compression='gzip', engine='pyarrow', )
         pbar.update()
     pbar.close()
