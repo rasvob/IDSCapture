@@ -38,7 +38,7 @@ if __name__ == "__main__":
         ret, frame = cap.read()
 
         if ret:
-            i += 1ě
+            i += 1
             pbar.update()
             if i >= start and i <= end:
                 out.write(frame[:, :, 0])

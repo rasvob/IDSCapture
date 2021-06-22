@@ -1,8 +1,8 @@
-experiment_name: Hrabova_test_metr
+experiment_name: VSB_3min_400fps
 root_directory: D:\Hella
 width: 800
-height: 256
+height: 100
 framerate: 400
 exposuretime: 2.328
 pixelclock: 160
-capture_lenght_minutes: 11
+capture_lenght_minutes: 3

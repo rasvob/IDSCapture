@@ -21,12 +21,13 @@ if __name__ == "__main__":
     pbar = tqdm(total=length, unit='ticks')
     end = 400*10
     first = True
-    free_run = True
+    free_run = False
     histogram_values = np.zeros(256)
+    vals = []
     while(cap.isOpened()):
         ret, frame = cap.read()
-        # key = cv2.waitKey(0)
-        key = None
+        key = cv2.waitKey(0)
+        # key = None
         if key == ord('c') or first or free_run:
             if ret:
                 first = False
@@ -35,13 +36,16 @@ if __name__ == "__main__":
                 if i > end:
                     break
                 frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
+                cv2.imshow('Frame - orig', frame)
                 rv = frame.ravel()
                 for x in rv:
                     histogram_values[x] += 1
+                    vals.append(x)
         elif key == ord('q'):
             break
     
-    plt.bar(x=np.arange(0, 256), height=histogram_values)
+    plt.hist(vals, range=(0, 160), bins=15)
+    # plt.bar(x=np.arange(0, 256), height=histogram_values)
     plt.show()
     cap.release()
     cv2.destroyAllWindows()
