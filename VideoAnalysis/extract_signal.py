@@ -5,13 +5,13 @@ import cv2
 from tqdm import tqdm
 
 if __name__ == "__main__":
-    # input_file = r'C:\Users\svo0175\Documents\Work\Svetlomet\Hella_06_05_2021\Hrabova_test_long_spatne_svetlo\Hrabova_test_long_spatne_svetlo_cut.mp4'
-    # input_file_ts = r'C:\Users\svo0175\Documents\Work\Svetlomet\Hella_06_05_2021\Hrabova_test_long_spatne_svetlo\timestamps_cut.txt'
-    # output_file = r'C:\Users\svo0175\Documents\Work\Svetlomet\Hella_06_05_2021\Hrabova_test_long_spatne_svetlo\Hrabova_test_long_spatne_svetlo_cut_{0}.{1}'
+    input_file = r'C:\Users\svo0175\Documents\Work\Svetlomet\Hella_06_05_2021\Hrabova_test_long_spatne_svetlo\Hrabova_test_long_spatne_svetlo_cut.mp4'
+    input_file_ts = r'C:\Users\svo0175\Documents\Work\Svetlomet\Hella_06_05_2021\Hrabova_test_long_spatne_svetlo\timestamps_cut.txt'
+    output_file = r'C:\Users\svo0175\Documents\Work\Svetlomet\Hella_06_05_2021\Hrabova_test_long_spatne_svetlo\Hrabova_test_long_spatne_svetlo_cut_{0}.{1}'
 
-    input_file = r'C:\Users\svo0175\Documents\Work\Svetlomet\Hella_06_05_2021\Hrabova_test_long_nove_svetlo\Hrabova_test_long_nove_svetlo_cut.mp4'
-    input_file_ts = r'C:\Users\svo0175\Documents\Work\Svetlomet\Hella_06_05_2021\Hrabova_test_long_nove_svetlo\timestamps_cut.txt'
-    output_file = r'C:\Users\svo0175\Documents\Work\Svetlomet\Hella_06_05_2021\Hrabova_test_long_nove_svetlo\Hrabova_test_long_nove_svetlo_cut_{0}.{1}'
+    # input_file = r'C:\Users\svo0175\Documents\Work\Svetlomet\Hella_06_05_2021\Hrabova_test_long_nove_svetlo\Hrabova_test_long_nove_svetlo_cut.mp4'
+    # input_file_ts = r'C:\Users\svo0175\Documents\Work\Svetlomet\Hella_06_05_2021\Hrabova_test_long_nove_svetlo\timestamps_cut.txt'
+    # output_file = r'C:\Users\svo0175\Documents\Work\Svetlomet\Hella_06_05_2021\Hrabova_test_long_nove_svetlo\Hrabova_test_long_nove_svetlo_cut_{0}.{1}'
 
     cap = cv2.VideoCapture(input_file)
     if (cap.isOpened() == False): 
@@ -28,7 +28,7 @@ if __name__ == "__main__":
     pbar = tqdm(total=length, unit='ticks')
     end = length
     first = True
-    free_run = True
+    free_run = False
     thresholds_arr = [10, 30, 50, 70, 100]
     out_arrs = {}
     for t in thresholds_arr:
@@ -49,8 +49,12 @@ if __name__ == "__main__":
                     out_arrs[x][i, :] = np.argmax(thresh_bin, axis=1)
                 
                 if not free_run:
-                    for i, frame_b in enumerate(thresholds_frames):
-                        cv2.imshow(f'Frame - bin {thresholds_arr[i]}', frame_b)
+                    for x, frame_b in enumerate(thresholds_frames):
+                        avg_for_line = int(np.mean(out_arrs[thresholds_arr[x]][i, :]))
+                        frame_b_color = cv2.cvtColor(frame_b, cv2.COLOR_GRAY2RGB)
+                        image_b = cv2.line(frame_b_color, (avg_for_line, 0), (avg_for_line, height-1), (0, 0, 255), 2)
+                        print(f'{thresholds_arr[x]}: {avg_for_line}')
+                        cv2.imshow(f'Frame - bin {thresholds_arr[x]}', image_b)
                     cv2.imshow('Frame - orig', frame)
 
                 i += 1
@@ -75,13 +79,14 @@ if __name__ == "__main__":
     pbar.close()
 
     print('Extraction done')
-    print('Save starting')
 
-    pbar = tqdm(total=len(out_arrs), unit='ticks')
-    ps_ts = pd.Series(pd.read_csv(input_file_ts, header=None).iloc[:, 0])
-    for k,v in out_arrs.items():
-        df = pd.DataFrame(v, columns=[f'Row_{x}' for x in range(height)])
-        df['FrameTimestamp_us'] = ps_ts
-        df.to_parquet(output_file.format(k, 'parquet.gzip'), compression='gzip', engine='pyarrow', )
-        pbar.update()
-    pbar.close()
+    if free_run:
+        print('Save starting')
+        pbar = tqdm(total=len(out_arrs), unit='ticks')
+        ps_ts = pd.Series(pd.read_csv(input_file_ts, header=None).iloc[:, 0])
+        for k,v in out_arrs.items():
+            df = pd.DataFrame(v, columns=[f'Row_{x}' for x in range(height)])
+            df['FrameTimestamp_us'] = ps_ts
+            df.to_parquet(output_file.format(k, 'parquet.gzip'), compression='gzip', engine='pyarrow', )
+            pbar.update()
+        pbar.close()

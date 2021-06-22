@@ -7,7 +7,7 @@ import functions
 
 experiment_name, root_directory, p_width, p_height, fps, exposuretime, pixelclock, capture_lenght_minutes = functions.load_settings()
 functions.check_and_prepare_directories(experiment_name, root_directory, create_empty_folder=False)
-play = False
+play = True
 
 if __name__ == "__main__":
     cap = None
@@ -34,6 +34,14 @@ if __name__ == "__main__":
                     pbar.update(1)
                     cv2.imshow('Frame', frame)
                     first = False
+            elif key == ord('s'):
+                for x in range(0, fps):
+                    ret = cap.read(p_width*p_height)
+                    if ret:
+                        i += 1
+                        pbar.update()
+                    else:
+                        break
             elif key == ord('q'):
                 break
 

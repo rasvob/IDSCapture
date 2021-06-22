@@ -105,7 +105,8 @@ frame_counter = 0
 max_frames_cnt = framerate*60*capture_lenght_minutes
 diff_arr = np.zeros(max_frames_cnt)
 timestamp_arr = np.zeros(max_frames_cnt)
-frame_delay = 2500000
+# frame_delay = 2500000
+frame_delay = 1000000000 // framerate
 
 while(nRet == ueye.IS_SUCCESS and frame_counter < max_frames_cnt):
     # In order to display the image in an OpenCV window we need to...
