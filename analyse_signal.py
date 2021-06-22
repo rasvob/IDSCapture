@@ -50,17 +50,18 @@ def dashboard_html(outputs, filename):
 local_smoothing_window_size = 5
 avg_calculation_window_size = 800
 frequency_calculation_window_size = 800
-input_filename = 'signal.csv'
-output_filename = 'analyse_signal_output.html'
+input_filename = r'D:\Hella\Hrabova_test_long_spatne_svetlo_128\Hrabova_test_long_spatne_svetlo_128_50_cut.parquet.gzip'
+output_filename = r'D:\Hella\Hrabova_test_long_spatne_svetlo_128\analyse_signal_output_50.html'
 print('Script for signal analysis started.')
 
 figs = list()
-df_avg = pd.read_csv(input_filename, index_col=0)
+df_avg = pd.read_parquet(input_filename, engine='pyarrow')
+
 print(f'Data loaded from file {input_filename}.')
 
 print('Processing signal..')
-df_avg['smoothed_avg_edge_occurence'] = df_avg.rolling(local_smoothing_window_size, center=True).avg_edge_occurence.mean()
-df_avg['rolling_avg_edge_occurence'] = df_avg.rolling(avg_calculation_window_size, center=True).avg_edge_occurence.mean()
+df_avg['smoothed_avg_edge_occurence'] = df_avg.rolling(local_smoothing_window_size, center=True).Edge_Avg.mean()
+df_avg['rolling_avg_edge_occurence'] = df_avg.rolling(avg_calculation_window_size, center=True).Edge_Avg.mean()
 
 df_avg.loc[df_avg.smoothed_avg_edge_occurence>=df_avg.rolling_avg_edge_occurence, 'polarity_smoothed'] = 1
 df_avg.loc[df_avg.smoothed_avg_edge_occurence<df_avg.rolling_avg_edge_occurence, 'polarity_smoothed'] = -1
@@ -80,9 +81,9 @@ df_avg_filter['frequency_rolling_mean'] = df_avg_filter.frequency.rolling(10000,
 df_avg_filter['FrameTimestamp_s'] = df_avg_filter.FrameTimestamp_us / 10**6
 
 # calculate deviation
-y_0 = df_avg_filter.iloc[:1000].avg_edge_occurence.mean() #TODO: is it right?
+y_0 = df_avg_filter.iloc[:1000].Edge_Avg.mean() #TODO: is it right?
 print(f'Calculated zero level y_0 {y_0} for deviation calculation.')
-df_avg_filter['deviation_pixel'] = y_0 - df_avg_filter.avg_edge_occurence
+df_avg_filter['deviation_pixel'] = y_0 - df_avg_filter.Edge_Avg
 df_avg_filter['deviation_mm'] = df_avg_filter.deviation_pixel / 2 #TODO: parametrize after calibration procedure
 
 # plot minute test summary
