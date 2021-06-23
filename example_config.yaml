@@ -1,0 +1,12 @@
+capture_lenght_minutes: 1
+chessboard_cols: 4
+chessboard_rows: 18
+experiment_name: VSB_25mm
+exposuretime: 2.328
+framerate: 400
+height: 300
+pixel_to_mm_ratio: 0.23
+pixelclock: 160
+root_directory: D:\Hella
+sqr_size_mm: 6
+width: 800
