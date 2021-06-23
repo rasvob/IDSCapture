@@ -84,7 +84,8 @@ df_avg_filter['FrameTimestamp_s'] = df_avg_filter.FrameTimestamp_us / 10**6
 y_0 = df_avg_filter.iloc[:1000].Edge_Avg.mean() #TODO: is it right?
 print(f'Calculated zero level y_0 {y_0} for deviation calculation.')
 df_avg_filter['deviation_pixel'] = y_0 - df_avg_filter.Edge_Avg
-df_avg_filter['deviation_mm'] = df_avg_filter.deviation_pixel / 2 #TODO: parametrize after calibration procedure
+pixel_to_mm_ratio = 0.5375
+df_avg_filter['deviation_mm'] = df_avg_filter.deviation_pixel * pixel_to_mm_ratio #TODO: parametrize after calibration procedure
 
 # plot minute test summary
 print('Generate output for time summary..')
