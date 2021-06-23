@@ -16,7 +16,44 @@ def ns_sleep(duration, get_now=perf_counter_ns):
     while now < end:
         now = get_now()
 
-experiment_name, root_directory, p_width, p_height, framerate, exposuretime, pixelclock, capture_lenght_minutes = functions.load_settings()
+def compute_distances(points, cb_size):
+    num_x_points = cb_size[0]
+    num_y_points = cb_size[1]
+
+    x_distances = list()
+    for y_coord in range(num_y_points):
+        points_index = y_coord * num_x_points
+        for point_1, point_2 in zip(points[points_index:points_index+num_x_points-1], points[points_index+1:points_index+num_x_points]):
+            x_distance = abs(point_1[0][0] - point_2[0][0])
+            x_distances.append(x_distance)
+
+    y_distances = list()
+    for x_coord in range(num_x_points):
+        for row_index in range(0, num_y_points-1):
+            index1 = x_coord + row_index * num_x_points
+            index2 = x_coord + (row_index+1) * num_x_points
+            point_1 = points[index1]
+            point_2 = points[index2]
+            y_distance = abs(point_1[0][1] - point_2[0][1])
+            y_distances.append(y_distance)
+
+    point_1 = points[0][0]
+    point_2 = points[num_x_points-1][0]
+    x_distance = abs(point_1[0] - point_2[0])
+    y_distance = abs(point_1[1] - point_2[1])
+    
+    v_angle = np.degrees(np.arctan(y_distance/x_distance))
+    return x_distances, y_distances, v_angle
+
+def overlay_frame(orig_frame, alpha=0.2, overlay_width=100):
+    frame = cv2.cvtColor(orig_frame, cv2.COLOR_GRAY2RGB)
+    overlay = np.zeros_like(frame, np.uint8)
+    h, w = frame.shape[0], frame.shape[1]
+    cv2.rectangle(overlay, (w - overlay_width, 0), (w - 1, h - 1), (0, 200, 0), cv2.FILLED)        
+    frame = cv2.addWeighted(overlay, alpha, frame, 1 - alpha, 0)
+    return frame
+
+experiment_name, root_directory, p_width, p_height, framerate, exposuretime, pixelclock, capture_lenght_minutes, sqr_size_mm, chessboard_rows, chessboard_cols = functions.load_settings_calibration()
 
 nBitsPerPixel = ueye.INT(8)
 bytes_per_pixel = 1
@@ -41,7 +78,6 @@ nRet = ueye.is_AOI(hCam, ueye.IS_AOI_IMAGE_SET_AOI, rectAOI, ueye.sizeof(rectAOI
 
 ms = ueye.DOUBLE(exposuretime)
 ret = ueye.is_Exposure(hCam, ueye.IS_EXPOSURE_CMD_SET_EXPOSURE, ms, ueye.sizeof(ms));
-# print('EXP:',ret, ms)
 
 clk_setter = ueye.c_uint(pixelclock)
 nRet = ueye.is_PixelClock(hCam, ueye.IS_PIXELCLOCK_CMD_SET, clk_setter, 4)
@@ -105,18 +141,14 @@ if nRet != ueye.IS_SUCCESS:
     print("is_InquireImageMem ERROR")
 
 frame_counter = 0
-max_frames_cnt = framerate*60*capture_lenght_minutes
+max_frames_cnt = framerate*60*120
 diff_arr = np.zeros(max_frames_cnt)
 timestamp_arr = np.zeros(max_frames_cnt)
-# frame_delay = 2500000
 frame_delay = 1000000000 // 25
 
-cb_size = (3, 17)
-mm_size = 6
+cb_size = (chessboard_cols - 1, chessboard_rows - 1)
 
 while(nRet == ueye.IS_SUCCESS):
-    # In order to display the image in an OpenCV window we need to...
-    # ...extract the data of our image memory
     start_time = perf_counter_ns()
     array = ueye.get_data(pcImageMemory, width, height, nBitsPerPixel, pitch, copy=False)
     timestamp_arr[frame_counter] = perf_counter_ns()/1000
@@ -128,67 +160,36 @@ while(nRet == ueye.IS_SUCCESS):
     ns_sleep(wait_time)
     stop_time = perf_counter_ns()
     diff_us = (stop_time - start_time)/1000
-    # print(f'Time difference: {diff_us}')
     diff_arr[frame_counter] = diff_us
     frame_counter += 1
 
     frame = cv2.rotate(frame, cv2.ROTATE_90_CLOCKWISE)
     ret, corners = cv2.findChessboardCorners(frame, cb_size, flags=cv2.CALIB_CB_FAST_CHECK)
-
-    frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2RGB)
-    overlay = np.zeros_like(frame, np.uint8)
-    cv2.rectangle(overlay, (height - 100, 0), (height - 1, width - 1), (0, 200, 0), cv2.FILLED)        
-    alpha = 0.2
-    frame = cv2.addWeighted(overlay, alpha, frame, 1 - alpha, 0)
+    frame = overlay_frame(frame)
 
     if ret:
         for k, v in enumerate(corners):
             v = v[0]
             frame = cv2.circle(frame, (v[0], v[1]), radius=2, color=(255, 0, 255), thickness=1)
-            cv2.putText(frame, str(k), (int(v[0]) + 10, int(v[1]) + 10), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 0, 255), 2)
+            cv2.putText(frame, str(k), (int(v[0]) + 10, int(v[1]) + 15), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (255, 0, 255), 1)
 
-        points = corners
-        num_x_points = cb_size[0]
-        num_y_points = cb_size[1]
+        x_distances, y_distances, v_angle = compute_distances(corners, cb_size)
+        y_ratio = sqr_size_mm / np.mean(y_distances)
 
-        x_distances = list()
-        for y_coord in range(num_y_points):
-            points_index = y_coord * num_x_points
-            for point_1, point_2 in zip(points[points_index:points_index+num_x_points-1], points[points_index+1:points_index+num_x_points]):
-                x_distance = abs(point_1[0][0] - point_2[0][0])
-                x_distances.append(x_distance)
-
-        y_distances = list()
-        for x_coord in range(num_x_points):
-            for row_index in range(0, num_y_points-1):
-                index1 = x_coord + row_index * num_x_points
-                index2 = x_coord + (row_index+1) * num_x_points
-                point_1 = points[index1]
-                point_2 = points[index2]
-                y_distance = abs(point_1[0][1] - point_2[0][1])
-                y_distances.append(y_distance)
-
-        point_1 = points[0][0]
-        point_2 = points[num_x_points-1][0]
-        x_distance = abs(point_1[0] - point_2[0])
-        y_distance = abs(point_1[1] - point_2[1])
-
-        x_ratio = mm_size / np.mean(x_distances)
-        y_ratio = mm_size / np.mean(y_distances)
-
-        cv2.putText(frame, f'X: {"{:.2f}".format(np.mean(x_distances))} +- {"{:.3f}".format(np.std(x_distances))}', (5, 15), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 255), 2)
-        cv2.putText(frame, f'Y: {"{:.2f}".format(np.mean(y_distances))} +- {"{:.3f}".format(np.std(y_distances))}', (5, 38), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 255), 2)
-        cv2.putText(frame, f'V-Angle: {"{:.2f}".format(np.degrees(np.arctan(y_distance/x_distance)))} deg', (5, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 255), 2)
+        cv2.putText(frame, f'X: {"{:.2f}".format(np.mean(x_distances))} +- {"{:.3f}".format(np.std(x_distances))} px', (5, 15), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 255), 2)
+        cv2.putText(frame, f'Y: {"{:.2f}".format(np.mean(y_distances))} +- {"{:.3f}".format(np.std(y_distances))} px', (5, 38), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 255), 2)
+        cv2.putText(frame, f'V-Angle: {"{:.2f}".format(v_angle)} deg', (5, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 255), 2)
         cv2.putText(frame, f'Y-ratio: 1 px ~ {"{:.2f}".format(y_ratio)} mm', (5, 82), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 255), 2)
-
-
-        
 
     cv2.imshow("Preview", frame)
 
+    key = cv2.waitKey(1)
     # Press q if you want to end the loop
-    if cv2.waitKey(1) & 0xFF == ord('q'):
+    if key == ord('q'):
         break
+    elif key == ord('s'):
+        print(f'Save ratio - {float(round(y_ratio, 2))}')
+        functions.save_ratio(float(round(y_ratio, 2)))
 
 
 print(f'Avg: {np.mean(diff_arr)}, Std: {np.std(diff_arr)}, Min: {np.min(diff_arr)}, Max: {np.max(diff_arr)}')

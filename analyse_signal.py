@@ -6,6 +6,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import plotly.offline as pyo
+import functions
 
 
 def dashboard_html(outputs, filename):
@@ -84,7 +85,7 @@ df_avg_filter['FrameTimestamp_s'] = df_avg_filter.FrameTimestamp_us / 10**6
 y_0 = df_avg_filter.iloc[:1000].Edge_Avg.mean() #TODO: is it right?
 print(f'Calculated zero level y_0 {y_0} for deviation calculation.')
 df_avg_filter['deviation_pixel'] = y_0 - df_avg_filter.Edge_Avg
-pixel_to_mm_ratio = 0.5375
+pixel_to_mm_ratio = functions.load_ratio()
 df_avg_filter['deviation_mm'] = df_avg_filter.deviation_pixel * pixel_to_mm_ratio #TODO: parametrize after calibration procedure
 
 # plot minute test summary
