@@ -96,7 +96,7 @@ df_avg_filter['elapsed_test_time_min'] = df_avg_filter.elapsed_test_time_s / 60
 df_avg_filter['elapsed_test_time_min_floor'] =  np.floor(df_avg_filter.elapsed_test_time_min)
 
 fig = px.box(df_avg_filter, x='elapsed_test_time_min_floor', y='deviation_mm', title='Deviation summary during minutes of test', labels={'elapsed_test_time_min_floor': 'Actual minute of vibration test', 'deviation_mm': 'Deviation in mm'})
-fig.add_hline(y=0, line_width=1, line_dash='dash', line_color='black', opacity=0.7)
+# fig.add_hline(y=0, line_width=1, line_dash='dash', line_color='black', opacity=0.7)
 figs.append(('fig', fig))
 figs.append(('table', df_avg_filter.groupby('elapsed_test_time_min_floor').deviation_mm.describe()))
 
@@ -108,7 +108,7 @@ for f_min, f_max in [(0, 10), (10, 15), (15,20), (20,25), (25,30), (30,35), (35,
 df_avg_filter.dropna(inplace=True)
 
 fig = px.box(df_avg_filter, x='frequency_bin', y='deviation_mm', title='Deviation summary for frequencies ranges', labels={'frequency_bin': 'Frequency range during test', 'deviation_mm': 'Deviation in mm'})
-fig.add_hline(y=0, line_width=1, line_dash='dash', line_color='black', opacity=0.7)
+# fig.add_hline(y=0, line_width=1, line_dash='dash', line_color='black', opacity=0.7)
 figs.append(('fig', fig))
 figs.append(('table', df_avg_filter.groupby('frequency_bin').deviation_mm.describe()))
 
