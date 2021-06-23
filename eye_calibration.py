@@ -54,6 +54,8 @@ def overlay_frame(orig_frame, alpha=0.2, overlay_width=100):
     return frame
 
 experiment_name, root_directory, p_width, p_height, framerate, exposuretime, pixelclock, capture_lenght_minutes, sqr_size_mm, chessboard_rows, chessboard_cols = functions.load_settings_calibration()
+p_height = 300
+
 
 nBitsPerPixel = ueye.INT(8)
 bytes_per_pixel = 1
