@@ -10,7 +10,8 @@ import os
 experiment_name, root_directory, p_width, p_height, fps, exposuretime, pixelclock, capture_lenght_minutes = functions.load_settings()
 functions.check_and_prepare_directories(experiment_name, root_directory, create_empty_folder=False)
 
-threshold = 30
+threshold = 50
+free_run = True
 
 def ns_to_us(start, end):
     return (end - start) /  1000
@@ -32,7 +33,6 @@ if __name__ == "__main__":
     pbar = tqdm(total=length, unit='ticks')
     end = length
     first = True
-    free_run = False
     signal = np.zeros(length)
     process_time_arr = np.zeros(length)
     read_time_arr = np.zeros(length)
