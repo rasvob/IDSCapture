@@ -1,10 +1,10 @@
-capture_lenght_minutes: 1
+capture_lenght_minutes: 2
 chessboard_cols: 4
 chessboard_rows: 18
-experiment_name: Hrabova_test_long_spatne_svetlo_128
+experiment_name: Hard_calibrace
 exposuretime: 2.328
 framerate: 400
-height: 128
+height: 256
 pixel_to_mm_ratio: 0.5
 pixelclock: 160
 root_directory: D:\Hella
