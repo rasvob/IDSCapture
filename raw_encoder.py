@@ -7,7 +7,7 @@ import functions
 
 experiment_name, root_directory, p_width, p_height, fps, exposuretime, pixelclock, capture_lenght_minutes = functions.load_settings()
 functions.check_and_prepare_directories(experiment_name, root_directory, create_empty_folder=False)
-play = False
+play = True
 
 if __name__ == "__main__":
     cap = None
@@ -31,7 +31,7 @@ if __name__ == "__main__":
                     array = np.frombuffer(array, dtype=np.uint8)
                     frame = np.reshape(array,(p_height, p_width, 1))
                     i += 1
-                    pbar.update(1)
+                    pbar.update()
                     cv2.imshow('Frame', frame)
                     first = False
             elif key == ord('s'):
