@@ -10,7 +10,7 @@ import os
 experiment_name, root_directory, p_width, p_height, fps, exposuretime, pixelclock, capture_lenght_minutes = functions.load_settings()
 functions.check_and_prepare_directories(experiment_name, root_directory, create_empty_folder=False)
 
-threshold = 50
+threshold = 55
 free_run = True
 
 def ns_to_us(start, end):

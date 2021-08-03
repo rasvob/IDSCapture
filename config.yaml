@@ -1,11 +1,11 @@
-capture_lenght_minutes: 2
+capture_lenght_minutes: 6
 chessboard_cols: 4
 chessboard_rows: 18
-experiment_name: VSB_calibrace
+experiment_name: SharpBoth2
 exposuretime: 2.328
 framerate: 400
 height: 100
-pixel_to_mm_ratio: 0.36
+pixel_to_mm_ratio: 0.41
 pixelclock: 160
 root_directory: D:\Hella
 sqr_size_mm: 6

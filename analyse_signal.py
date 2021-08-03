@@ -8,6 +8,7 @@ from plotly.subplots import make_subplots
 import plotly.offline as pyo
 import functions
 
+DEBUG = True
 
 def dashboard_html(outputs, filename):
     '''Saves a list of plotly figures in an html file.
@@ -52,17 +53,21 @@ local_smoothing_window_size = 5
 avg_calculation_window_size = 800
 frequency_calculation_window_size = 800
 input_filename = r'D:\Hella\Hrabova_test_long_spatne_svetlo_128\Hrabova_test_long_spatne_svetlo_128_50_cut.parquet.gzip'
-output_filename = r'D:\Hella\Hrabova_test_long_spatne_svetlo_128\analyse_signal_output_50.html'
+output_filename = r'D:\Hella\Hrabova_test_long_spatne_svetlo_128\analyse_signal_output_30_compare.html'
 print('Script for signal analysis started.')
 
 figs = list()
-df_avg = pd.read_parquet(input_filename, engine='pyarrow')
+
+if DEBUG:
+    df_avg = pd.read_csv('D:\Hella\Hrabova_test_long_spatne_svetlo_128\Hrabova_test_long_spatne_svetlo_128_30_raw.csv', sep=';')
+else:
+    df_avg = pd.read_parquet(input_filename, engine='pyarrow')
 
 print(f'Data loaded from file {input_filename}.')
 
 print('Processing signal..')
-df_avg['smoothed_avg_edge_occurence'] = df_avg.rolling(local_smoothing_window_size, center=True).Edge_Avg.mean()
-df_avg['rolling_avg_edge_occurence'] = df_avg.rolling(avg_calculation_window_size, center=True).Edge_Avg.mean()
+df_avg['smoothed_avg_edge_occurence'] = df_avg.rolling(local_smoothing_window_size, center=True).avg_edge_occurence.mean()
+df_avg['rolling_avg_edge_occurence'] = df_avg.rolling(avg_calculation_window_size, center=True).avg_edge_occurence.mean()
 
 df_avg.loc[df_avg.smoothed_avg_edge_occurence>=df_avg.rolling_avg_edge_occurence, 'polarity_smoothed'] = 1
 df_avg.loc[df_avg.smoothed_avg_edge_occurence<df_avg.rolling_avg_edge_occurence, 'polarity_smoothed'] = -1
@@ -82,11 +87,11 @@ df_avg_filter['frequency_rolling_mean'] = df_avg_filter.frequency.rolling(10000,
 df_avg_filter['FrameTimestamp_s'] = df_avg_filter.FrameTimestamp_us / 10**6
 
 # calculate deviation
-y_0 = df_avg_filter.iloc[:1000].Edge_Avg.mean() #TODO: is it right?
+y_0 = df_avg_filter.iloc[:1000].avg_edge_occurence.mean() #TODO: is it right?
 print(f'Calculated zero level y_0 {y_0} for deviation calculation.')
-df_avg_filter['deviation_pixel'] = y_0 - df_avg_filter.Edge_Avg
+df_avg_filter['deviation_pixel'] = df_avg_filter.avg_edge_occurence - y_0
 pixel_to_mm_ratio = functions.load_ratio()
-df_avg_filter['deviation_mm'] = df_avg_filter.deviation_pixel * pixel_to_mm_ratio #TODO: parametrize after calibration procedure
+df_avg_filter['deviation_mm'] = df_avg_filter.deviation_pixel * pixel_to_mm_ratio * (10.0/8.5) #TODO: parametrize after calibration procedure
 
 # plot minute test summary
 print('Generate output for time summary..')
@@ -115,3 +120,7 @@ figs.append(('table', df_avg_filter.groupby('frequency_bin').deviation_mm.descri
 print('Creating output report..')
 dashboard_html(figs, output_filename)
 print(f'Output saved to file {output_filename}.')
+
+if DEBUG:
+    df_avg.to_csv(r'D:\Hella\SharpExp\df_avg_partial_python.csv', sep=';')
+    df_avg_filter.to_csv(r'D:\Hella\SharpExp\df_avg_filter_partial_python.csv', sep=';')
