@@ -1,12 +1,15 @@
-capture_lenght_minutes: 6
+capture_lenght_minutes: 2
 chessboard_cols: 4
 chessboard_rows: 18
-experiment_name: SharpBoth2
-exposuretime: 2.328
-framerate: 400
-height: 100
+experiment_name: Pristav_02
+# exposuretime: 33.158 # 30fps
+# exposuretime: 41.498 # 24fps
+# exposuretime: 66.497 # 15fps
+exposuretime: 66.497
+framerate: 15
+height: 600
 pixel_to_mm_ratio: 0.41
 pixelclock: 160
-root_directory: D:\Hella
+root_directory: D:\Pristav
 sqr_size_mm: 6
 width: 800

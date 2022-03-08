@@ -7,8 +7,8 @@ from tqdm import tqdm
 if __name__ == "__main__":
     order = 7
 
-    input_file = f'D:\Hella\HARD\zaznam{order}.avi'
-    output_file = f'D:\Hella\HARD\zaznam_pwm_{order}.csv'
+    input_file = f'D:\Hella\HARD\VSB_Hard_9_8_Mereni0{order}.avi'
+    output_file = f'D:\Hella\HARD\VSB_Hard_9_8_Mereni0{order}.csv'
 
     cap = cv2.VideoCapture(input_file)
     if (cap.isOpened() == False): 
