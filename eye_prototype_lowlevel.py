@@ -33,7 +33,7 @@ def ns_sleep(duration, get_now=perf_counter_ns):
     while now < end:
         now = get_now()
 
-experiment_name, root_directory, p_width, p_height, framerate, exposuretime, pixelclock, capture_lenght_minutes = functions.load_settings()
+experiment_name, root_directory, p_width, p_height, framerate, exposuretime, pixelclock, capture_lenght_minutes, hardware_gain, hardware_gamma = functions.load_settings()
 functions.check_and_prepare_directories(experiment_name, root_directory, create_empty_folder=True)
 functions.copy_config_file()
 
@@ -99,6 +99,16 @@ def CaptureFunction(evt: Event, pbar):
     print("PixelClock:\t", nRet, clk)
 
     print("is_SetFrameRate:\t", nRet, fpsNewEye)
+
+    gain_setter = ueye.c_uint(hardware_gain)
+    nRet = ueye.is_SetHardwareGain(hCam, gain_setter, ueye.IS_IGNORE_PARAMETER, ueye.IS_IGNORE_PARAMETER, ueye.IS_IGNORE_PARAMETER)
+    if nRet != ueye.IS_SUCCESS:
+        print("is_SetHardwareGain SET ERROR")
+
+    gamma_setter = ueye.c_uint(hardware_gamma)
+    nRet = ueye.is_Gamma(hCam, ueye.IS_GAMMA_CMD_SET, gamma_setter, ueye.sizeof(gamma_setter))
+    if nRet != ueye.IS_SUCCESS:
+        print("is_Gamma SET ERROR")
 
     pcImageMemory = ueye.c_mem_p()
     MemID = ueye.int()

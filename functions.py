@@ -19,11 +19,13 @@ def load_settings(config_filename = 'config.yaml'):
     exposuretime = config_yml['exposuretime']
     pixelclock = config_yml['pixelclock']
     capture_lenght_minutes = config_yml['capture_lenght_minutes']
+    hardware_gain = config_yml['hardware_gain']
+    hardware_gamma = config_yml['hardware_gamma']
 
-    return experiment_name, root_directory, width, height, framerate, exposuretime, pixelclock, capture_lenght_minutes
+    return experiment_name, root_directory, width, height, framerate, exposuretime, pixelclock, capture_lenght_minutes, hardware_gain, hardware_gamma
 
 def load_settings_calibration(config_filename = 'config.yaml'):
-    experiment_name, root_directory, width, height, framerate, exposuretime, pixelclock, capture_lenght_minutes = load_settings()
+    experiment_name, root_directory, width, height, framerate, exposuretime, pixelclock, capture_lenght_minutes, hardware_gain, hardware_gamma = load_settings()
 
     with open(config_filename, 'r') as file:
         config_yml = yaml.safe_load(file)
@@ -32,7 +34,7 @@ def load_settings_calibration(config_filename = 'config.yaml'):
     chessboard_rows = config_yml['chessboard_rows']
     chessboard_cols = config_yml['chessboard_cols']
 
-    return experiment_name, root_directory, width, height, framerate, exposuretime, pixelclock, capture_lenght_minutes, sqr_size_mm, chessboard_rows, chessboard_cols
+    return experiment_name, root_directory, width, height, framerate, exposuretime, pixelclock, capture_lenght_minutes, sqr_size_mm, chessboard_rows, chessboard_cols, hardware_gain, hardware_gamma
 
 def load_ratio(config_filename = 'config.yaml'):
     with open(config_filename, 'r') as file:
@@ -50,7 +52,7 @@ def save_ratio(ratio, config_filename = 'config.yaml'):
         yaml.dump(config_yml, file)
 
 def copy_config_file(config_filename = 'config.yaml'):
-    experiment_name, root_directory, width, height, framerate, exposuretime, pixelclock, capture_lenght_minutes = load_settings(config_filename)
+    experiment_name, root_directory, width, height, framerate, exposuretime, pixelclock, capture_lenght_minutes, hardware_gain, hardware_gamma = load_settings(config_filename)
     dest_conf_filename = os.path.join(root_directory, experiment_name, 'backuped_config.yaml')    
     os.system(f'copy {config_filename} {dest_conf_filename}')    
 

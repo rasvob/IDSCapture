@@ -13,7 +13,7 @@ def ns_sleep(duration, get_now=perf_counter_ns):
     while now < end:
         now = get_now()
 
-experiment_name, root_directory, p_width, p_height, framerate, exposuretime, pixelclock, capture_lenght_minutes = functions.load_settings()
+experiment_name, root_directory, p_width, p_height, framerate, exposuretime, pixelclock, capture_lenght_minutes, hardware_gain, hardware_gamma = functions.load_settings()
 
 nBitsPerPixel = ueye.INT(8)
 bytes_per_pixel = 1
@@ -100,6 +100,16 @@ if nRet != ueye.IS_SUCCESS:
 nRet = ueye.is_InquireImageMem(hCam, pcImageMemory, MemID, width, height, nBitsPerPixel, pitch)
 if nRet != ueye.IS_SUCCESS:
     print("is_InquireImageMem ERROR")
+
+gain_setter = ueye.c_uint(hardware_gain)
+nRet = ueye.is_SetHardwareGain(hCam, gain_setter, ueye.IS_IGNORE_PARAMETER, ueye.IS_IGNORE_PARAMETER, ueye.IS_IGNORE_PARAMETER)
+if nRet != ueye.IS_SUCCESS:
+    print("is_SetHardwareGain SET ERROR")
+
+gamma_setter = ueye.c_uint(hardware_gamma)
+nRet = ueye.is_Gamma(hCam, ueye.IS_GAMMA_CMD_SET, gamma_setter, ueye.sizeof(gamma_setter))
+if nRet != ueye.IS_SUCCESS:
+    print("is_Gamma SET ERROR")
 
 frame_counter = 0
 max_frames_cnt = framerate*60*capture_lenght_minutes

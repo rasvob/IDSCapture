@@ -5,9 +5,9 @@ import os
 from tqdm import tqdm
 import functions
 
-experiment_name, root_directory, p_width, p_height, fps, exposuretime, pixelclock, capture_lenght_minutes = functions.load_settings()
+experiment_name, root_directory, p_width, p_height, fps, exposuretime, pixelclock, capture_lenght_minutes, hardware_gain, hardware_gamma = functions.load_settings()
 functions.check_and_prepare_directories(experiment_name, root_directory, create_empty_folder=False)
-play = False
+play = True
 
 if __name__ == "__main__":
     cap = None

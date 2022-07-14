@@ -53,7 +53,7 @@ def overlay_frame(orig_frame, alpha=0.2, overlay_width=100):
     frame = cv2.addWeighted(overlay, alpha, frame, 1 - alpha, 0)
     return frame
 
-experiment_name, root_directory, p_width, p_height, framerate, exposuretime, pixelclock, capture_lenght_minutes, sqr_size_mm, chessboard_rows, chessboard_cols = functions.load_settings_calibration()
+experiment_name, root_directory, p_width, p_height, framerate, exposuretime, pixelclock, capture_lenght_minutes, sqr_size_mm, chessboard_rows, chessboard_cols, hardware_gain, hardware_gamma = functions.load_settings_calibration()
 p_height = 300
 
 
@@ -117,6 +117,16 @@ if nRet != ueye.IS_SUCCESS:
 print("PixelClock:\t", nRet, clk)
 
 print("is_SetFrameRate:\t", nRet, fpsNewEye)
+
+gain_setter = ueye.c_uint(hardware_gain)
+nRet = ueye.is_SetHardwareGain(hCam, gain_setter, ueye.IS_IGNORE_PARAMETER, ueye.IS_IGNORE_PARAMETER, ueye.IS_IGNORE_PARAMETER)
+if nRet != ueye.IS_SUCCESS:
+    print("is_SetHardwareGain SET ERROR")
+
+gamma_setter = ueye.c_uint(hardware_gamma)
+nRet = ueye.is_Gamma(hCam, ueye.IS_GAMMA_CMD_SET, gamma_setter, ueye.sizeof(gamma_setter))
+if nRet != ueye.IS_SUCCESS:
+    print("is_Gamma SET ERROR")
 
 pcImageMemory = ueye.c_mem_p()
 MemID = ueye.int()
